@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Database
+*.sqlite
+*.sqlite3
+data/
+
+# Environment variables
+.env
+
+# Logs
+logs/
+*.log
+
+# Coverage directory
+coverage/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
