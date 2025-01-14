@@ -32,10 +32,13 @@ export async function initializeDatabase() {
       model TEXT NOT NULL,
       year INTEGER,
       vin TEXT,
+      first_registration DATE,
+      engine TEXT,
+      engine_type TEXT,
       notes TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-
+    
     CREATE TABLE IF NOT EXISTS service_types (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL UNIQUE,

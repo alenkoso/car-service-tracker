@@ -15,14 +15,25 @@ router.get('/', async (req, res) => {
 });
 
 // Get vehicle by ID
-router.get('/:id', async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
+    const { 
+      name, make, model, year, vin, 
+      first_registration, engine, engine_type, notes 
+    } = req.body;
+    
     const db = await getDb();
-    const vehicle = await db.get('SELECT * FROM vehicles WHERE id = ?', req.params.id);
-    if (!vehicle) {
-      return res.status(404).json({ error: 'Vehicle not found' });
-    }
-    res.json(vehicle);
+    await db.run(
+      `UPDATE vehicles 
+       SET name = ?, make = ?, model = ?, year = ?, 
+           vin = ?, first_registration = ?, engine = ?, 
+           engine_type = ?, notes = ? 
+       WHERE id = ?`,
+      [name, make, model, year, vin, 
+       first_registration, engine, engine_type, 
+       notes, req.params.id]
+    );
+    res.json({ message: 'Vehicle updated successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
