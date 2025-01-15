@@ -48,5 +48,10 @@ export const SERVICE_TYPES = [
       id: 'body_kit',
       name: 'Body kit',
       description: 'Body work and repairs'
+    },
+    {
+      id: 'braking_fluid',
+      name: 'Braking fluid replacement',
+      description: 'Replacement of brake fluid to maintain brake system performance'
     }
   ];

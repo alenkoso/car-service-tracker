@@ -55,7 +55,64 @@ router.post('/', async (req, res) => {
         next_service_notes
       ]
     );
-    res.status(201).json({ id: result.lastID });
+    
+    const newService = await db.get('SELECT * FROM service_records WHERE id = ?', result.lastID);
+    res.status(201).json(newService);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update existing service record
+router.put('/:id', async (req, res) => {
+  try {
+    const {
+      service_date,
+      mileage,
+      service_type,
+      description,
+      cost,
+      location,
+      next_service_mileage,
+      next_service_notes
+    } = req.body;
+
+    // Convert empty strings to null for number fields
+    const sanitizedMileage = mileage === '' ? null : mileage;
+    const sanitizedCost = cost === '' ? null : cost;
+    const sanitizedNextServiceMileage = next_service_mileage === '' ? null : next_service_mileage;
+
+    const db = await getDb();
+    const result = await db.run(
+      `UPDATE service_records 
+       SET service_date = ?, 
+           mileage = ?, 
+           service_type = ?, 
+           description = ?, 
+           cost = ?, 
+           location = ?, 
+           next_service_mileage = ?, 
+           next_service_notes = ? 
+       WHERE id = ?`,
+      [
+        service_date,
+        sanitizedMileage,
+        service_type,
+        description,
+        sanitizedCost,
+        location,
+        sanitizedNextServiceMileage,
+        next_service_notes,
+        req.params.id
+      ]
+    );
+
+    if (result.changes === 0) {
+      return res.status(404).json({ message: 'Service record not found' });
+    }
+
+    const updatedService = await db.get('SELECT * FROM service_records WHERE id = ?', req.params.id);
+    res.json(updatedService);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

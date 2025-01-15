@@ -39,20 +39,20 @@ export default function ServiceList() {
 
     const handleSubmit = async (data) => {
         try {
-            if (editingService) {
-                await axios.put(`http://localhost:3000/api/services/${editingService.id}`, data)
-            } else {
-                await axios.post('http://localhost:3000/api/services', {
-                    ...data,
-                    vehicle_id: selectedVehicleId
-                })
-            }
-            fetchServices()
-            setIsModalOpen(false)
+          if (editingService) {
+            await axios.put(`http://localhost:3000/api/services/${editingService.id}`, data);
+          } else {
+            await axios.post('http://localhost:3000/api/services', {
+              ...data,
+              vehicle_id: selectedVehicleId
+            });
+          }
+          fetchServices();
+          setIsModalOpen(false);
         } catch (error) {
-            console.error('Failed to save service:', error)
+          console.error('Failed to save service:', error);
         }
-    }
+      };
 
     if (loading) return <div>Loading...</div>
     if (error) return <div>Error: {error}</div>
