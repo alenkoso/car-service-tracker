@@ -14,26 +14,54 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get vehicle by ID
+// Update vehicle by ID - Single route to avoid conflict
 router.put('/:id', async (req, res) => {
   try {
     const { 
-      name, make, model, year, vin, 
-      first_registration, engine, engine_type, notes 
+      name, 
+      make, 
+      model, 
+      year, 
+      vin, 
+      first_registration, 
+      engine, 
+      engine_type, 
+      notes 
     } = req.body;
     
     const db = await getDb();
-    await db.run(
+    const result = await db.run(
       `UPDATE vehicles 
-       SET name = ?, make = ?, model = ?, year = ?, 
-           vin = ?, first_registration = ?, engine = ?, 
-           engine_type = ?, notes = ? 
+       SET name = ?, 
+           make = ?, 
+           model = ?, 
+           year = ?, 
+           vin = ?, 
+           first_registration = ?, 
+           engine = ?, 
+           engine_type = ?, 
+           notes = ? 
        WHERE id = ?`,
-      [name, make, model, year, vin, 
-       first_registration, engine, engine_type, 
-       notes, req.params.id]
+      [
+        name, 
+        make, 
+        model, 
+        year, 
+        vin, 
+        first_registration, 
+        engine, 
+        engine_type, 
+        notes, 
+        req.params.id
+      ]
     );
-    res.json({ message: 'Vehicle updated successfully' });
+
+    if (result.changes === 0) {
+      return res.status(404).json({ message: 'Vehicle not found' });
+    }
+
+    const updatedVehicle = await db.get('SELECT * FROM vehicles WHERE id = ?', req.params.id);
+    res.json(updatedVehicle);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -75,20 +103,5 @@ router.post('/', async (req, res) => {
     res.status(500).json({ error: 'Failed to create vehicle' });
   }
 });
-  
-// Update vehicle by ID
-  router.put('/:id', async (req, res) => {
-    try {
-      const { name, make, model, year, vin, notes } = req.body;
-      const db = await getDb();
-      await db.run(
-        'UPDATE vehicles SET name = ?, make = ?, model = ?, year = ?, vin = ?, notes = ? WHERE id = ?',
-        [name, make, model, year, vin, notes, req.params.id]
-      );
-      res.json({ message: 'Vehicle updated successfully' });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  });
 
 export default router;
