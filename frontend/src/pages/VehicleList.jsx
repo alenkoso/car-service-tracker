@@ -1,30 +1,56 @@
-import { useState, useEffect } from 'react'
-import axios from 'axios'
-import { PlusIcon } from '@heroicons/react/20/solid'
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { format } from 'date-fns';
+import AddVehicleFormModal from '../components/AddVehicleFormModal.jsx';
 
 export default function VehicleList() {
-  const [vehicles, setVehicles] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [vehicles, setVehicles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState(null);
+
+  const fetchVehicles = async () => {
+    try {
+      const response = await axios.get('http://localhost:3000/api/vehicles');
+      setVehicles(response.data);
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to fetch vehicles');
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchVehicles = async () => {
-      try {
-        const response = await axios.get('http://localhost:3000/api/vehicles')
-        setVehicles(response.data)
-        setLoading(false)
-      } catch (err) {
-        setError('Failed to fetch vehicles')
-        setLoading(false)
+    fetchVehicles();
+  }, []);
+
+  const handleAddClick = () => {
+    setEditingVehicle(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEditClick = (vehicle) => {
+    setEditingVehicle(vehicle);
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (data) => {
+    try {
+      if (editingVehicle) {
+        await axios.put(`http://localhost:3000/api/vehicles/${editingVehicle.id}`, data);
+      } else {
+        await axios.post('http://localhost:3000/api/vehicles', data);
       }
+      fetchVehicles();
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Failed to save vehicle:', error);
     }
+  };
 
-    fetchVehicles()
-  }, [])
-
-  if (loading) return <div>Loading...</div>
-  if (error) return <div>Error: {error}</div>
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div>
@@ -38,6 +64,7 @@ export default function VehicleList() {
         <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
           <button
             type="button"
+            onClick={handleAddClick}
             className="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
           >
             Add vehicle
@@ -100,7 +127,10 @@ export default function VehicleList() {
                         </div>
                       </td>
                       <td className="relative py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <button className="text-indigo-600 hover:text-indigo-900">
+                        <button 
+                          onClick={() => handleEditClick(vehicle)}
+                          className="text-indigo-600 hover:text-indigo-900"
+                        >
                           Edit
                         </button>
                       </td>
@@ -112,6 +142,13 @@ export default function VehicleList() {
           </div>
         </div>
       </div>
+
+      <AddVehicleFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        vehicle={editingVehicle}
+        onSubmit={handleSubmit}
+      />
     </div>
-  )
+  );
 }

@@ -41,18 +41,40 @@ router.put('/:id', async (req, res) => {
 
 // Create new vehicle
 router.post('/', async (req, res) => {
-    try {
-      const { name, make, model, year, vin, notes } = req.body;  // Added notes
-      const db = await getDb();
-      const result = await db.run(
-        'INSERT INTO vehicles (user_id, name, make, model, year, vin, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [1, name, make, model, year, vin, notes]  // Added notes
-      );
-      res.status(201).json({ id: result.lastID });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  });
+  try {
+    const db = await getDb();
+    const {
+      name,
+      make,
+      model,
+      year,
+      vin,
+      engine,
+      engine_type,
+      first_registration,
+      notes
+    } = req.body;
+
+    // TODO: Add user_id from authenticated session
+    const user_id = 1; // Temporary default user_id
+
+    const result = await db.run(`
+      INSERT INTO vehicles (
+        user_id, name, make, model, year, 
+        vin, engine, engine_type, first_registration, notes
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      user_id, name, make, model, year,
+      vin, engine, engine_type, first_registration, notes
+    ]);
+
+    const vehicle = await db.get('SELECT * FROM vehicles WHERE id = ?', result.lastID);
+    res.status(201).json(vehicle);
+  } catch (error) {
+    console.error('Error creating vehicle:', error);
+    res.status(500).json({ error: 'Failed to create vehicle' });
+  }
+});
   
 // Update vehicle by ID
   router.put('/:id', async (req, res) => {
