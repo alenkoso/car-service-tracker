@@ -2,9 +2,16 @@ import { useForm, Controller } from 'react-hook-form';
 import ServiceTypeSelector from './ServiceTypeSelector';
 import ServiceLocationSelector from './ServiceLocationSelector';
 
-export default function ServiceForm({ service, onSubmit, onCancel }) {
+export default function ServiceForm({ 
+    service, 
+    onSubmit, 
+    onCancel, 
+    vehicles,
+    selectedVehicleId 
+}) {
   const { register, handleSubmit, formState: { errors }, control } = useForm({
     defaultValues: service || {
+      vehicle_id: selectedVehicleId,
       service_date: new Date().toISOString().split('T')[0],
       mileage: '',
       service_type: '',
@@ -20,6 +27,9 @@ export default function ServiceForm({ service, onSubmit, onCancel }) {
   const textareaClassName = "block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6";
 
   const validationRules = {
+    vehicle_id: {
+      required: 'Vehicle selection is required'
+    },
     service_date: { 
       required: 'Date is required' 
     },
@@ -71,10 +81,33 @@ export default function ServiceForm({ service, onSubmit, onCancel }) {
   return (
     <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-6 max-w-2xl">
       <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+        {/* Vehicle Selection */}
+        <div className="sm:col-span-2">
+          <label htmlFor="vehicle_id" className="block text-sm font-medium leading-6 text-gray-900">
+            Vehicle*
+          </label>
+          <div className="mt-2">
+            <select
+              {...register('vehicle_id', validationRules.vehicle_id)}
+              className={inputClassName}
+            >
+              <option value="">Select a vehicle</option>
+              {vehicles.map((vehicle) => (
+                <option key={vehicle.id} value={vehicle.id}>
+                  {vehicle.name}
+                </option>
+              ))}
+            </select>
+            {errors.vehicle_id && (
+              <p className="mt-2 text-sm text-red-600">{errors.vehicle_id.message}</p>
+            )}
+          </div>
+        </div>
+
         {/* Date */}
         <div>
           <label htmlFor="service_date" className="block text-sm font-medium leading-6 text-gray-900">
-            Service Date
+            Service Date*
           </label>
           <div className="mt-2">
             <input
@@ -109,7 +142,7 @@ export default function ServiceForm({ service, onSubmit, onCancel }) {
         {/* Type Of Service */}
         <div className="sm:col-span-2">
           <label htmlFor="service_type" className="block text-sm font-medium leading-6 text-gray-900">
-            Type Of Service
+            Type Of Service*
           </label>
           <div className="mt-2">
             <Controller
