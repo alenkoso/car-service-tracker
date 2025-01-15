@@ -1,8 +1,8 @@
 import { Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import AddVehicleForm from './AddVehicleForm';
+import ServiceForm from './ServiceForm';
 
-export default function AddVehicleModal({ isOpen, onClose, vehicle, onSubmit }) {
+export default function ServiceFormModal({ isOpen, onClose, service, onSubmit }) {
   return (
     <Transition.Root show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={onClose}>
@@ -31,11 +31,11 @@ export default function AddVehicleModal({ isOpen, onClose, vehicle, onSubmit }) 
             >
               <Dialog.Panel className="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-6">
                 <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900">
-                  {vehicle ? 'Edit Vehicle' : 'Add New Vehicle'}
+                  {service ? 'Edit Service Record' : 'Add New Service Record'}
                 </Dialog.Title>
                 <div className="mt-4">
-                  <AddVehicleForm
-                    vehicle={vehicle}
+                  <ServiceForm
+                    service={service}
                     onSubmit={onSubmit}
                     onCancel={onClose}
                   />
