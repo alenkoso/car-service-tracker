@@ -1,7 +1,8 @@
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
+import ServiceTypeSelector from './ServiceTypeSelector';
 
 export default function ServiceForm({ service, onSubmit, onCancel }) {
-  const { register, handleSubmit, formState: { errors }, reset } = useForm({
+  const { register, handleSubmit, formState: { errors }, control } = useForm({
     defaultValues: service || {
       service_date: new Date().toISOString().split('T')[0],
       mileage: '',
@@ -35,8 +36,8 @@ export default function ServiceForm({ service, onSubmit, onCancel }) {
     service_type: { 
       required: 'Type of Service is required',
       maxLength: {
-        value: 200,
-        message: 'Type of Service cannot exceed 200 characters'
+        value: 500,
+        message: 'Type of Service cannot exceed 500 characters'
       }
     },
     cost: {
@@ -106,20 +107,24 @@ export default function ServiceForm({ service, onSubmit, onCancel }) {
           </div>
         </div>
 
-        {/* Tupe Of Service */}
+        {/* Type Of Service */}
         <div className="sm:col-span-2">
           <label htmlFor="service_type" className="block text-sm font-medium leading-6 text-gray-900">
             Type Of Service
           </label>
           <div className="mt-2">
-            <input
-              type="text"
-              {...register('service_type', validationRules.service_type)}
-              className={inputClassName}
+            <Controller
+              name="service_type"
+              control={control}
+              rules={validationRules.service_type}
+              render={({ field }) => (
+                <ServiceTypeSelector
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={errors.service_type?.message}
+                />
+              )}
             />
-            {errors.service_type && (
-              <p className="mt-2 text-sm text-red-600">{errors.service_type.message}</p>
-            )}
           </div>
         </div>
 
