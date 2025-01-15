@@ -1,5 +1,6 @@
 import { useForm, Controller } from 'react-hook-form';
 import ServiceTypeSelector from './ServiceTypeSelector';
+import ServiceLocationSelector from './ServiceLocationSelector';
 
 export default function ServiceForm({ service, onSubmit, onCancel }) {
   const { register, handleSubmit, formState: { errors }, control } = useForm({
@@ -18,7 +19,6 @@ export default function ServiceForm({ service, onSubmit, onCancel }) {
   const inputClassName = "block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6";
   const textareaClassName = "block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6";
 
-  // Form validation rules
   const validationRules = {
     service_date: { 
       required: 'Date is required' 
@@ -34,10 +34,9 @@ export default function ServiceForm({ service, onSubmit, onCancel }) {
       }
     },
     service_type: { 
-      required: 'Type of Service is required',
-      maxLength: {
-        value: 500,
-        message: 'Type of Service cannot exceed 500 characters'
+      required: 'At least one service type is required',
+      validate: {
+        notEmpty: value => value.trim() !== '' || 'At least one service type is required'
       }
     },
     cost: {
@@ -166,10 +165,16 @@ export default function ServiceForm({ service, onSubmit, onCancel }) {
             Location
           </label>
           <div className="mt-2">
-            <input
-              type="text"
-              {...register('location')}
-              className={inputClassName}
+            <Controller
+              name="location"
+              control={control}
+              render={({ field }) => (
+                <ServiceLocationSelector
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={errors.location?.message}
+                />
+              )}
             />
           </div>
         </div>

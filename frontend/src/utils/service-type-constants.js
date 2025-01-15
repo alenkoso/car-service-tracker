@@ -1,23 +1,18 @@
 export const SERVICE_TYPES = [
     {
+      id: 'haldex',
+      name: 'Haldex',
+      description: '4x4 system service'
+    },
+    {
       id: 'regular_maintenance',
       name: 'Regular maintenance',
       description: 'Oil service + filters'
     },
     {
-      id: 'major_service',
-      name: 'Major service',
-      description: 'Timing belt, water pump kit, tensioners, rollers, engine oil, filters'
-    },
-    {
-      id: 'haldex',
-      name: 'Haldex service',
-      description: '4x4 system service'
-    },
-    {
       id: 'dsg',
-      name: 'DSG service',
-      description: 'DSG transmission oil and filter'
+      name: 'DSG',
+      description: 'DSG transmission service'
     },
     {
       id: 'fuel_filter',
@@ -32,71 +27,26 @@ export const SERVICE_TYPES = [
     {
       id: 'tow_bar',
       name: 'Tow-bar service',
-      description: 'Tow bar maintenance and checks'
+      description: 'Tow bar maintenance'
+    },
+    {
+      id: 'major_service',
+      name: 'Major service',
+      description: 'Replacement of timing belt, water pump kit, tensioners, rollers, engine oil, filters'
     },
     {
       id: 'brakes',
       name: 'Brakes replacement',
-      description: 'Brake pads, discs, or complete system'
+      description: 'Brake system service'
     },
     {
       id: 'tyres',
       name: 'Tyres',
-      description: 'Tyre replacement or rotation'
+      description: 'Tyre service or replacement'
     },
     {
       id: 'body_kit',
       name: 'Body kit',
-      description: 'Body work and aesthetics'
-    },
-    {
-      id: 'ac_service',
-      name: 'Air conditioning service',
-      description: 'AC system check, regas, cleaning'
-    },
-    {
-      id: 'battery',
-      name: 'Battery service',
-      description: 'Battery replacement or maintenance'
-    },
-    {
-      id: 'wheel_alignment',
-      name: 'Wheel alignment',
-      description: 'Wheel alignment and balancing'
-    },
-    {
-      id: 'spark_plugs',
-      name: 'Spark plug replacement',
-      description: 'For petrol engines'
-    },
-    {
-      id: 'glow_plugs',
-      name: 'Glow plug replacement',
-      description: 'For diesel engines'
-    },
-    {
-      id: 'windshield',
-      name: 'Windshield service',
-      description: 'Replacement or repair'
-    },
-    {
-      id: 'suspension',
-      name: 'Suspension work',
-      description: 'Suspension system service or replacement'
-    },
-    {
-      id: 'clutch',
-      name: 'Clutch replacement',
-      description: 'Clutch system service'
-    },
-    {
-      id: 'alternator',
-      name: 'Alternator service',
-      description: 'Alternator repair or replacement'
-    },
-    {
-      id: 'steering',
-      name: 'Steering system',
-      description: 'Steering system maintenance'
+      description: 'Body work and repairs'
     }
   ];
