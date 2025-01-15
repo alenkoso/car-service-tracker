@@ -2,7 +2,7 @@ import { Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import AddVehicleForm from './AddVehicleForm';
 
-export default function AddVehicleModal({ isOpen, onClose, vehicle, onSubmit }) {
+export default function AddVehicleFormModal({ isOpen, onClose, vehicle, onSubmit }) {
   return (
     <Transition.Root show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={onClose}>
