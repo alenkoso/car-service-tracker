@@ -24,7 +24,7 @@ router.post('/', async (req, res) => {
       vehicle_id,
       service_date,
       mileage,
-      summary,
+      service_type,
       description,
       cost,
       location,
@@ -32,14 +32,28 @@ router.post('/', async (req, res) => {
       next_service_notes
     } = req.body;
 
+    // Convert empty strings to null for number fields
+    const sanitizedMileage = mileage === '' ? null : mileage;
+    const sanitizedCost = cost === '' ? null : cost;
+    const sanitizedNextServiceMileage = next_service_mileage === '' ? null : next_service_mileage;
+
     const db = await getDb();
     const result = await db.run(
       `INSERT INTO service_records (
-        vehicle_id, service_date, mileage, summary, description,
+        vehicle_id, service_date, mileage, service_type, description,
         cost, location, next_service_mileage, next_service_notes
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [vehicle_id, service_date, mileage, summary, description,
-       cost, location, next_service_mileage, next_service_notes]
+      [
+        vehicle_id,
+        service_date,
+        sanitizedMileage,
+        service_type,
+        description,
+        sanitizedCost,
+        location,
+        sanitizedNextServiceMileage,
+        next_service_notes
+      ]
     );
     res.status(201).json({ id: result.lastID });
   } catch (error) {
@@ -49,32 +63,32 @@ router.post('/', async (req, res) => {
 
 // Get services within a date range
 router.get('/range', async (req, res) => {
-    try {
-      const { start_date, end_date, vehicle_id } = req.query;
-      const db = await getDb();
-      
-      let query = `
-        SELECT * FROM service_records 
-        WHERE service_date BETWEEN ? AND ?
-      `;
-      let params = [start_date, end_date];
-  
-      // Add vehicle filter if vehicle_id is provided
-      if (vehicle_id) {
-        query += ' AND vehicle_id = ?';
-        params.push(vehicle_id);
-      }
-  
-      query += ' ORDER BY service_date DESC';
-  
-      const services = await db.all(query, params);
-      res.json(services);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+  try {
+    const { start_date, end_date, vehicle_id } = req.query;
+    const db = await getDb();
+    
+    let query = `
+      SELECT * FROM service_records 
+      WHERE service_date BETWEEN ? AND ?
+    `;
+    let params = [start_date, end_date];
+
+    // Add vehicle filter if vehicle_id is provided
+    if (vehicle_id) {
+      query += ' AND vehicle_id = ?';
+      params.push(vehicle_id);
     }
-  });
-  
-// Get services by type (using summary field for now)
+
+    query += ' ORDER BY service_date DESC';
+
+    const services = await db.all(query, params);
+    res.json(services);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get services by type 
 router.get('/type/:type', async (req, res) => {
   try {
     const { type } = req.params;
@@ -84,7 +98,7 @@ router.get('/type/:type', async (req, res) => {
     let query = `
       SELECT * FROM service_records 
       WHERE (
-        LOWER(summary) LIKE LOWER(?)
+        LOWER(service_type) LIKE LOWER(?)
         OR LOWER(description) LIKE LOWER(?)
       )
     `;
