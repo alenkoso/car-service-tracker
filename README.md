@@ -140,6 +140,4 @@ Edit `frontend/src/utils/service-locations-constants.js` to add or modify servic
 
 ## Contact
 
-Alen Koso - [Your Email or GitHub Profile]
-
 Project Link: [https://github.com/alenkoso/car-service-tracker](https://github.com/alenkoso/car-service-tracker)
