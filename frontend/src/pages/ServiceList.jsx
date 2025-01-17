@@ -3,6 +3,7 @@ import axios from 'axios'
 import { format } from 'date-fns'
 import { formatNumber, formatCost, formatMileage } from '../utils/formatters';
 import ServiceFormModal from '../components/ServiceFormModal';
+import DownloadPDFButton from '../components/DownloadPDFButton';
 
 export default function ServiceList() {
     const [services, setServices] = useState([])
@@ -87,72 +88,73 @@ export default function ServiceList() {
 
     return (
         <div>
-            <div className="sm:flex sm:items-center mb-4">
-                <div className="sm:flex-auto">
-                    <h1 className="text-base font-semibold leading-6 text-gray-900">Service Records</h1>
-                </div>
-                
-                {/* Vehicle Selector */}
-                <div className="mb-4 sm:mb-0 mr-4">
-                    <label htmlFor="vehicle-select" className="block text-sm font-medium text-gray-700 mr-2">
-                        Select Vehicle
-                    </label>
-                    <select
-                        id="vehicle-select"
-                        value={selectedVehicleId || ''}
-                        onChange={(e) => setSelectedVehicleId(Number(e.target.value))}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                    >
-                        {vehicles.map((vehicle) => (
-                            <option key={vehicle.id} value={vehicle.id}>
-                                {vehicle.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+            <div className="sm:flex sm:items-center sm:justify-between mb-6">
+                <h1 className="text-base font-semibold leading-6 text-gray-900">Service Records</h1>
 
-                <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-                    <button
-                        type="button"
-                        onClick={handleAddClick}
-                        className="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
-                    >
-                        Add service record
-                    </button>
+                <div className="flex flex-col sm:flex-row sm:items-end gap-4 mt-4 sm:mt-0">
+                    {/* Vehicle Selector */}
+                    <div>
+                        <label htmlFor="vehicle-select" className="block text-sm font-medium text-gray-700 mb-1">
+                            Select Vehicle
+                        </label>
+                        <select
+                            id="vehicle-select"
+                            value={selectedVehicleId || ''}
+                            onChange={(e) => setSelectedVehicleId(Number(e.target.value))}
+                            className="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        >
+                            {vehicles.map((vehicle) => (
+                                <option key={vehicle.id} value={vehicle.id}>
+                                    {vehicle.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-3">
+                        {selectedVehicleId && (
+                            <button
+                                onClick={() => {
+                                    // Handle PDF download
+                                    window.open(`http://localhost:3000/api/exports/vehicle/${selectedVehicleId}/pdf`, '_blank');
+                                }}
+                                type="button"
+                                className="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                            >
+                                <svg className="-ml-0.5 h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z" />
+                                    <path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" />
+                                </svg>
+                                Download PDF
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            onClick={handleAddClick}
+                            className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                        >
+                            Add service record
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <div className="mt-8 flow-root">
                 <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                    <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                    <div className="inline-block min-w-full py-2 align-middle">
                         <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
                             <table className="min-w-full divide-y divide-gray-300">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
-                                            Date
-                                        </th>
-                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                                            Mileage
-                                        </th>
-                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                                            Type of Service
-                                        </th>
-                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                                            Description
-                                        </th>
-                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                                            Cost
-                                        </th>
-                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                                            Location
-                                        </th>
-                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                                            Next Service
-                                        </th>
-                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                                            Next Service Notes
-                                        </th>
+                                        <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Date</th>
+                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Mileage</th>
+                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Type of Service</th>
+                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Description</th>
+                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Cost</th>
+                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Location</th>
+                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Next Service</th>
+                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Next Service Notes</th>
                                         <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
                                             <span className="sr-only">Edit</span>
                                         </th>

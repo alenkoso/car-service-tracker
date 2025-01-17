@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { initializeDatabase } from './db/init.js';
 import vehicleRoutes from './routes/vehicles.js';
 import serviceRoutes from './routes/services.js';
+import exportRoutes from './routes/exports.js';
 
 dotenv.config();
 
@@ -14,27 +15,30 @@ const port = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
-app.use(helmet());
+app.use(helmet({
+    crossOriginResourcePolicy: false // Allow PDF to be downloaded in modern browsers
+}));
 app.use(morgan('dev'));
 app.use(express.json());
 
 // Routes
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/exports', exportRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK' });
+    res.status(200).json({ status: 'OK' });
 });
 
 // Initialize database and start server
 initializeDatabase()
-  .then(() => {
-    app.listen(port, () => {
-      console.log(`Server running on port ${port}`);
+    .then(() => {
+        app.listen(port, () => {
+            console.log(`Server running on port ${port}`);
+        });
+    })
+    .catch((error) => {
+        console.error('Failed to initialize database:', error);
+        process.exit(1);
     });
-  })
-  .catch((error) => {
-    console.error('Failed to initialize database:', error);
-    process.exit(1);
-  });
