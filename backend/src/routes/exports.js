@@ -1,18 +1,20 @@
+// backend/src/routes/exports.js
 import express from 'express';
 import PDFDocument from 'pdfkit';
 import { format } from 'date-fns';
 import { getDb } from '../db/init.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const FONT_PATH = path.join(__dirname, '..', 'fonts', 'OpenSans-Regular.ttf');
 
 const router = express.Router();
 
-// Helper function to sanitize filename
-const sanitizeFilename = (str) => {
-    return str
-        .replace(/[^a-z0-9]/gi, '_') // Replace non-alphanumeric chars with underscore
-        .toLowerCase()
-        .replace(/_+/g, '_') // Replace multiple underscores with single one
-        .replace(/^_|_$/g, ''); // Remove leading/trailing underscores
-};
+// Helper function to format values
+const formatValue = (value) => value || '/';
+const formatCost = (cost) => cost ? `€${Number(cost).toFixed(2)}` : '/';
+const formatMileage = (mileage) => mileage ? `${mileage.toLocaleString()} km` : '/';
 
 router.get('/vehicle/:vehicleId/pdf', async (req, res) => {
     const vehicleId = req.params.vehicleId;
@@ -20,38 +22,33 @@ router.get('/vehicle/:vehicleId/pdf', async (req, res) => {
 
     try {
         const db = await getDb();
-        
-        // Get vehicle information
         const vehicle = await db.get('SELECT * FROM vehicles WHERE id = ?', vehicleId);
-        console.log('Vehicle data:', vehicle);
-
+        
         if (!vehicle) {
-            console.log(`No vehicle found with ID: ${vehicleId}`);
             return res.status(404).json({ error: 'Vehicle not found' });
         }
 
-        // Get service records
         const services = await db.all(`
             SELECT * FROM service_records 
             WHERE vehicle_id = ? 
             ORDER BY service_date DESC
         `, vehicleId);
-        console.log(`Found ${services.length} service records`);
 
-        // Create PDF document
+        // Create PDF document with custom font
         const doc = new PDFDocument({
             size: 'A4',
             margin: 50
         });
 
-        // Generate safe filename
-        const safeFilename = sanitizeFilename(`service_records_${vehicle.make}_${vehicle.model}`);
+        // Register and use custom font
+        doc.registerFont('OpenSans', FONT_PATH);
+        doc.font('OpenSans');
 
         // Set response headers
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=${safeFilename}.pdf`);
+        res.setHeader('Content-Disposition', 
+            `attachment; filename="service_records_${vehicle.id}.pdf"`);
 
-        // Pipe PDF to response
         doc.pipe(res);
 
         // Document title
@@ -66,20 +63,15 @@ router.get('/vehicle/:vehicleId/pdf', async (req, res) => {
            .text('Vehicle Information')
            .moveDown(0.5);
 
-        doc.fontSize(12);
-        [
-            `Make: ${vehicle.make}`,
-            `Model: ${vehicle.model}`,
-            `Year: ${vehicle.year || 'N/A'}`,
-            `Engine: ${vehicle.engine || 'N/A'}`,
-            `VIN: ${vehicle.vin || 'N/A'}`,
-            `First Registration: ${vehicle.first_registration ? 
-                format(new Date(vehicle.first_registration), 'dd.MM.yyyy') : 'N/A'}`
-        ].forEach(line => {
-            doc.text(line).moveDown(0.2);
-        });
-
-        doc.moveDown();
+        doc.fontSize(12)
+           .text(`Make: ${vehicle.make}`)
+           .text(`Model: ${vehicle.model}`)
+           .text(`Year: ${vehicle.year || '/'}`)
+           .text(`Engine: ${formatValue(vehicle.engine)}`)
+           .text(`VIN: ${formatValue(vehicle.vin)}`)
+           .text(`First Registration: ${vehicle.first_registration ? 
+                format(new Date(vehicle.first_registration), 'dd.MM.yyyy') : '/'}`)
+           .moveDown();
 
         // Service records section
         if (services.length > 0) {
@@ -89,49 +81,50 @@ router.get('/vehicle/:vehicleId/pdf', async (req, res) => {
 
             doc.fontSize(12);
             services.forEach((service, index) => {
-                try {
-                    // Date and mileage header
-                    const header = `${format(new Date(service.service_date), 'dd.MM.yyyy')} - ${
-                        service.mileage ? `${service.mileage.toLocaleString()} km` : 'N/A'
-                    }`;
-                    doc.text(header, { underline: true }).moveDown(0.3);
+                // Date and mileage header
+                doc.text(`${format(new Date(service.service_date), 'dd.MM.yyyy')} - ${formatMileage(service.mileage)}`, 
+                    { underline: true })
+                   .moveDown(0.3);
 
-                    // Service details
-                    const details = [
-                        `Type: ${service.service_type || 'N/A'}`,
-                        `Description: ${service.description || 'N/A'}`,
-                        `Location: ${service.location || 'N/A'}`,
-                        `Cost: ${service.cost ? `€${Number(service.cost).toFixed(2)}` : 'N/A'}`
-                    ];
+                // Service details
+                doc.text(`Type: ${formatValue(service.service_type)}`)
+                   .text(`Description: ${formatValue(service.description)}`)
+                   .text(`Location: ${formatValue(service.location)}`)
+                   .text(`Cost: ${formatCost(service.cost)}`);
 
-                    details.forEach(detail => {
-                        doc.text(detail);
-                    });
-
-                    // Next service information
-                    if (service.next_service_mileage || service.next_service_notes) {
-                        doc.moveDown(0.3).text('Next Service:');
-                        if (service.next_service_mileage) {
-                            doc.text(`Mileage: ${service.next_service_mileage.toLocaleString()} km`);
-                        }
-                        if (service.next_service_notes) {
-                            doc.text(`Notes: ${service.next_service_notes}`);
-                        }
+                // Next service information
+                if (service.next_service_mileage || service.next_service_notes) {
+                    doc.moveDown(0.3)
+                       .text('Next Service:');
+                    
+                    if (service.next_service_mileage) {
+                        doc.text(`Mileage: ${formatMileage(service.next_service_mileage)}`);
                     }
-
-                    // Add space between records
-                    if (index < services.length - 1) {
-                        doc.moveDown();
+                    
+                    if (service.next_service_notes) {
+                        doc.text(`Notes: ${formatValue(service.next_service_notes)}`);
                     }
-                } catch (err) {
-                    console.error(`Error processing service record ${service.id}:`, err);
+                }
+
+                // Add space between records
+                if (index < services.length - 1) {
+                    doc.moveDown();
                 }
             });
         } else {
             doc.text('No service records found.');
         }
 
-        // Finalize PDF
+        // Add footer with generation date
+        doc.fontSize(8)
+           .text(
+               `Generated on: ${format(new Date(), 'dd.MM.yyyy HH:mm')}`, 
+               50, 
+               doc.page.height - 50,
+               { align: 'center' }
+           );
+
+        // Finalize the document
         doc.end();
         console.log('PDF generation completed successfully');
 
