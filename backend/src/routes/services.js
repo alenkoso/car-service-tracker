@@ -7,9 +7,24 @@ const router = express.Router();
 router.get('/vehicle/:vehicleId', async (req, res) => {
   try {
     const db = await getDb();
+    
+    // First verify the vehicle belongs to the user
+    const vehicle = await db.get(
+      'SELECT id FROM vehicles WHERE id = ? AND user_id = ?',
+      [req.params.vehicleId, req.userId]
+    );
+
+    if (!vehicle) {
+      return res.status(404).json({ message: 'Vehicle not found' });
+    }
+
     const services = await db.all(
-      'SELECT * FROM service_records WHERE vehicle_id = ? ORDER BY service_date DESC',
-      req.params.vehicleId
+      `SELECT s.* 
+       FROM service_records s
+       JOIN vehicles v ON s.vehicle_id = v.id
+       WHERE s.vehicle_id = ? AND v.user_id = ?
+       ORDER BY service_date DESC`,
+      [req.params.vehicleId, req.userId]
     );
     res.json(services);
   } catch (error) {
@@ -32,12 +47,22 @@ router.post('/', async (req, res) => {
       next_service_notes
     } = req.body;
 
+    // First verify the vehicle belongs to the user
+    const db = await getDb();
+    const vehicle = await db.get(
+      'SELECT id FROM vehicles WHERE id = ? AND user_id = ?',
+      [vehicle_id, req.userId]
+    );
+
+    if (!vehicle) {
+      return res.status(404).json({ message: 'Vehicle not found' });
+    }
+
     // Convert empty strings to null for number fields
     const sanitizedMileage = mileage === '' ? null : mileage;
     const sanitizedCost = cost === '' ? null : cost;
     const sanitizedNextServiceMileage = next_service_mileage === '' ? null : next_service_mileage;
 
-    const db = await getDb();
     const result = await db.run(
       `INSERT INTO service_records (
         vehicle_id, service_date, mileage, service_type, description,
@@ -56,7 +81,13 @@ router.post('/', async (req, res) => {
       ]
     );
     
-    const newService = await db.get('SELECT * FROM service_records WHERE id = ?', result.lastID);
+    const newService = await db.get(
+      `SELECT s.* 
+       FROM service_records s
+       JOIN vehicles v ON s.vehicle_id = v.id
+       WHERE s.id = ? AND v.user_id = ?`, 
+      [result.lastID, req.userId]
+    );
     res.status(201).json(newService);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -77,12 +108,26 @@ router.put('/:id', async (req, res) => {
       next_service_notes
     } = req.body;
 
+    const db = await getDb();
+
+    // Verify the service record belongs to a vehicle owned by the user
+    const serviceExists = await db.get(
+      `SELECT s.id 
+       FROM service_records s
+       JOIN vehicles v ON s.vehicle_id = v.id
+       WHERE s.id = ? AND v.user_id = ?`,
+      [req.params.id, req.userId]
+    );
+
+    if (!serviceExists) {
+      return res.status(404).json({ message: 'Service record not found' });
+    }
+
     // Convert empty strings to null for number fields
     const sanitizedMileage = mileage === '' ? null : mileage;
     const sanitizedCost = cost === '' ? null : cost;
     const sanitizedNextServiceMileage = next_service_mileage === '' ? null : next_service_mileage;
 
-    const db = await getDb();
     const result = await db.run(
       `UPDATE service_records 
        SET service_date = ?, 
@@ -111,7 +156,13 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Service record not found' });
     }
 
-    const updatedService = await db.get('SELECT * FROM service_records WHERE id = ?', req.params.id);
+    const updatedService = await db.get(
+      `SELECT s.* 
+       FROM service_records s
+       JOIN vehicles v ON s.vehicle_id = v.id
+       WHERE s.id = ? AND v.user_id = ?`,
+      [req.params.id, req.userId]
+    );
     res.json(updatedService);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -125,45 +176,28 @@ router.get('/range', async (req, res) => {
     const db = await getDb();
     
     let query = `
-      SELECT * FROM service_records 
-      WHERE service_date BETWEEN ? AND ?
+      SELECT s.* 
+      FROM service_records s
+      JOIN vehicles v ON s.vehicle_id = v.id
+      WHERE v.user_id = ?
+      AND service_date BETWEEN ? AND ?
     `;
-    let params = [start_date, end_date];
+    let params = [req.userId, start_date, end_date];
 
     // Add vehicle filter if vehicle_id is provided
     if (vehicle_id) {
-      query += ' AND vehicle_id = ?';
+      query += ' AND s.vehicle_id = ?';
       params.push(vehicle_id);
-    }
 
-    query += ' ORDER BY service_date DESC';
+      // Verify the vehicle belongs to the user
+      const vehicle = await db.get(
+        'SELECT id FROM vehicles WHERE id = ? AND user_id = ?',
+        [vehicle_id, req.userId]
+      );
 
-    const services = await db.all(query, params);
-    res.json(services);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Get services by type 
-router.get('/type/:type', async (req, res) => {
-  try {
-    const { type } = req.params;
-    const { vehicle_id } = req.query;
-    const db = await getDb();
-    
-    let query = `
-      SELECT * FROM service_records 
-      WHERE (
-        LOWER(service_type) LIKE LOWER(?)
-        OR LOWER(description) LIKE LOWER(?)
-      )
-    `;
-    let params = [`%${type}%`, `%${type}%`];
-
-    if (vehicle_id) {
-      query += ' AND vehicle_id = ?';
-      params.push(vehicle_id);
+      if (!vehicle) {
+        return res.status(404).json({ message: 'Vehicle not found' });
+      }
     }
 
     query += ' ORDER BY service_date DESC';

@@ -3,12 +3,18 @@ import * as migration001 from './001_initial_schema.js';
 import * as migration002 from './002_add_vehicle_columns.js';
 import * as migration003 from './003_add_service_types.js';
 import * as migration004 from './004_rename_summary_column.js';
+import * as migration005 from './005_add_braking_fluid_service_type.js';
+import * as migration006 from './006_add_user_relations.js';
+import * as migration007 from './007_create_users_table.js';
 
 const migrations = [
   migration001,
   migration002,
   migration003,
-  migration004
+  migration004,
+  migration005,
+  migration006,
+  migration007
 ];
 
 async function createMigrationsTable(db) {

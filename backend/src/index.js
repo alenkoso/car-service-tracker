@@ -4,6 +4,8 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { initializeDatabase } from './db/init.js';
+import { auth } from './routes/auth/auth.middleware.js';
+import authRoutes from './routes/auth/auth.routes.js';
 import vehicleRoutes from './routes/vehicles.js';
 import serviceRoutes from './routes/services.js';
 import exportRoutes from './routes/exports.js';
@@ -22,9 +24,10 @@ app.use(morgan('dev'));
 app.use(express.json());
 
 // Routes
-app.use('/api/vehicles', vehicleRoutes);
-app.use('/api/services', serviceRoutes);
-app.use('/api/exports', exportRoutes);
+app.use('/api/auth', authRoutes);           // Auth routes don't need auth middleware
+app.use('/api/vehicles', auth, vehicleRoutes);     // Protected routes
+app.use('/api/services', auth, serviceRoutes);     // Protected routes
+app.use('/api/exports', auth, exportRoutes);       // Protected routes
 
 // Health check endpoint
 app.get('/health', (req, res) => {
